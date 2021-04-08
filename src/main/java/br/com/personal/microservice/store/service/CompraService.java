@@ -1,5 +1,7 @@
 package br.com.personal.microservice.store.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,16 +14,20 @@ import br.com.personal.microservice.store.model.Compra;
 @Service
 public class CompraService {
 
+	private static final Logger LOG = LoggerFactory.getLogger(CompraService.class);
+	
 	@Autowired
 	private FornecedorClient fornecedorClient;
 	
 	public Compra realizaCompra(CompraDTO compra) {
+		
+		final String estado = compra.getEndereco().getEstado();
 	
+		LOG.info("Buscando informações de um fornecedor {}", estado);
 		InfoFornecedorDTO fornecedorDTO = fornecedorClient.getInfoPorEstado(compra.getEndereco().getEstado());
 		
+		LOG.info("Realizando um pedido");
 		InfoPedidoDTO pedidoDTO = fornecedorClient.realizaPedido(compra.getItens());
-		
-		System.out.println(fornecedorDTO.getEndereco());
 		
 		Compra compraSalva = new Compra();
 		compraSalva.setPedidoId(pedidoDTO.getId());
