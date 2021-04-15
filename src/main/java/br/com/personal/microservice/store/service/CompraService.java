@@ -17,6 +17,7 @@ import br.com.personal.microservice.store.controller.dto.InfoFornecedorDTO;
 import br.com.personal.microservice.store.controller.dto.InfoPedidoDTO;
 import br.com.personal.microservice.store.controller.dto.VoucherDTO;
 import br.com.personal.microservice.store.model.Compra;
+import br.com.personal.microservice.store.model.CompraState;
 import br.com.personal.microservice.store.repository.CompraRepository;
 
 @Service
@@ -42,30 +43,29 @@ public class CompraService {
 			threadPoolKey = "realizaCompraThreadPool")
 	public Compra realizaCompra(CompraDTO compra) {
 		
-		final String estado = compra.getEndereco().getEstado();
+		Compra compraSalva = new Compra();
+		compraSalva.setEnderecoDestino(compra.getEndereco().toString());
+		compraSalva.setState(CompraState.RECEBIDO);
+		compraRepository.save(compraSalva);
 	
-		LOG.info("Buscando informações de um fornecedor {}", estado);
 		InfoFornecedorDTO fornecedorDTO = fornecedorClient.getInfoPorEstado(compra.getEndereco().getEstado());
 		
-		LOG.info("Realizando um pedido");
 		InfoPedidoDTO pedidoDTO = fornecedorClient.realizaPedido(compra.getItens());
+		compraSalva.setPedidoId(pedidoDTO.getId());
+		compraSalva.setTempoDePreparo(pedidoDTO.getTempoDePreparo());
+		compraSalva.setState(CompraState.PEDIDO_REALIZADO);
+		compraRepository.save(compraSalva);
 		
 		InfoEntregaDTO entregaDTO = new InfoEntregaDTO();
 		entregaDTO.setPedidoId(pedidoDTO.getId());
 		entregaDTO.setDataParaEntrega(LocalDate.now().plusDays(pedidoDTO.getTempoDePreparo()));
 		entregaDTO.setEnderecoOrigem(fornecedorDTO.getEndereco());
 		entregaDTO.setEnderecoDestino(compra.getEndereco().toString());
-		
 		VoucherDTO voucher = transportadorClient.reservaEntrega(entregaDTO);
-		
-		Compra compraSalva = new Compra();
-		compraSalva.setPedidoId(pedidoDTO.getId());
-		compraSalva.setTempoDePreparo(pedidoDTO.getTempoDePreparo());
-		compraSalva.setEnderecoDestino(compra.getEndereco().toString());
 		compraSalva.setDataParaEntrega(voucher.getPrevisaoParaEntrega());
 		compraSalva.setVoucher(voucher.getNumero());
-		
-		compraRepository.save(compraSalva);
+		compraSalva.setState(CompraState.RESERVA_ENTREGA_REALIZADA);
+		compraRepository.save(compraSalva);		
 		
 		return compraSalva;
 	}

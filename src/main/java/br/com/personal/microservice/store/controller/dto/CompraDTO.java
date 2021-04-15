@@ -2,10 +2,13 @@ package br.com.personal.microservice.store.controller.dto;
 
 import java.util.List;
 
+import br.com.personal.microservice.store.model.CompraState;
+
 public class CompraDTO {
 
 	private List<ItemCompraDTO> itens;
 	private EnderecoDTO endereco;
+	
 	public List<ItemCompraDTO> getItens() {
 		return itens;
 	}
@@ -22,6 +25,5 @@ public class CompraDTO {
 	@Override
 	public String toString() {
 		return "CompraDTO [itens=" + itens + ", endereco=" + endereco + "]";
-	}
-	
+	}	
 }
