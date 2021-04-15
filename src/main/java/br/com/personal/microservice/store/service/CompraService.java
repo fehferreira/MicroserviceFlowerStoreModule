@@ -1,5 +1,7 @@
 package br.com.personal.microservice.store.service;
 
+import java.time.LocalDate;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,13 +50,21 @@ public class CompraService {
 		LOG.info("Realizando um pedido");
 		InfoPedidoDTO pedidoDTO = fornecedorClient.realizaPedido(compra.getItens());
 		
-		InfoEntregaDTO entregaDTO = new InfoEntregaDTO();		
-		VoucherDTO voucher = transportadorClient.reservaentrega(entregaDTO);
+		InfoEntregaDTO entregaDTO = new InfoEntregaDTO();
+		entregaDTO.setPedidoId(pedidoDTO.getId());
+		entregaDTO.setDataParaEntrega(LocalDate.now().plusDays(pedidoDTO.getTempoDePreparo()));
+		entregaDTO.setEnderecoOrigem(fornecedorDTO.getEndereco());
+		entregaDTO.setEnderecoDestino(compra.getEndereco().toString());
+		
+		VoucherDTO voucher = transportadorClient.reservaEntrega(entregaDTO);
 		
 		Compra compraSalva = new Compra();
 		compraSalva.setPedidoId(pedidoDTO.getId());
 		compraSalva.setTempoDePreparo(pedidoDTO.getTempoDePreparo());
 		compraSalva.setEnderecoDestino(compra.getEndereco().toString());
+		compraSalva.setDataParaEntrega(voucher.getPrevisaoParaEntrega());
+		compraSalva.setVoucher(voucher.getNumero());
+		
 		compraRepository.save(compraSalva);
 		
 		return compraSalva;
