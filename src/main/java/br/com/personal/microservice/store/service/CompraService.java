@@ -12,11 +12,15 @@ import br.com.personal.microservice.store.controller.dto.CompraDTO;
 import br.com.personal.microservice.store.controller.dto.InfoFornecedorDTO;
 import br.com.personal.microservice.store.controller.dto.InfoPedidoDTO;
 import br.com.personal.microservice.store.model.Compra;
+import br.com.personal.microservice.store.repository.CompraRepository;
 
 @Service
 public class CompraService {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CompraService.class);
+	
+	@Autowired
+	private CompraRepository compraRepository;
 	
 	@Autowired
 	private FornecedorClient fornecedorClient;
@@ -36,6 +40,7 @@ public class CompraService {
 		compraSalva.setPedidoId(pedidoDTO.getId());
 		compraSalva.setTempoDePreparo(pedidoDTO.getTempoDePreparo());
 		compraSalva.setEnderecoDestino(compra.getEndereco().toString());
+		compraRepository.save(compraSalva);
 		
 		return compraSalva;
 	}
