@@ -12,6 +12,7 @@ import br.com.personal.microservice.store.controller.dto.CompraDTO;
 import br.com.personal.microservice.store.controller.dto.InfoFornecedorDTO;
 import br.com.personal.microservice.store.controller.dto.InfoPedidoDTO;
 import br.com.personal.microservice.store.model.Compra;
+import br.com.personal.microservice.store.repository.CompraRepository;
 
 @Service
 public class CompraService {
@@ -19,9 +20,18 @@ public class CompraService {
 	private static final Logger LOG = LoggerFactory.getLogger(CompraService.class);
 	
 	@Autowired
+	private CompraRepository compraRepository;
+	
+	@Autowired
 	private FornecedorClient fornecedorClient;
 	
-	@HystrixCommand(fallbackMethod = "realizaCompraFallback")
+	@HystrixCommand(threadPoolKey = "getByIdThreadPool")
+	public Compra getById(Long id) {
+		return compraRepository.findById(id).orElse(new Compra());		
+	}
+	
+	@HystrixCommand(fallbackMethod = "realizaCompraFallback",
+			threadPoolKey = "realizaCompraThreadPool")
 	public Compra realizaCompra(CompraDTO compra) {
 		
 		final String estado = compra.getEndereco().getEstado();
@@ -36,6 +46,7 @@ public class CompraService {
 		compraSalva.setPedidoId(pedidoDTO.getId());
 		compraSalva.setTempoDePreparo(pedidoDTO.getTempoDePreparo());
 		compraSalva.setEnderecoDestino(compra.getEndereco().toString());
+		compraRepository.save(compraSalva);
 		
 		return compraSalva;
 	}
@@ -45,6 +56,4 @@ public class CompraService {
 		compraFallBack.setEnderecoDestino(compra.getEndereco().toString());
 		return compraFallBack;
 	}
-	
-
 }
