@@ -8,9 +8,12 @@ import org.springframework.stereotype.Service;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 
 import br.com.personal.microservice.store.client.FornecedorClient;
+import br.com.personal.microservice.store.client.TransportadorClient;
 import br.com.personal.microservice.store.controller.dto.CompraDTO;
+import br.com.personal.microservice.store.controller.dto.InfoEntregaDTO;
 import br.com.personal.microservice.store.controller.dto.InfoFornecedorDTO;
 import br.com.personal.microservice.store.controller.dto.InfoPedidoDTO;
+import br.com.personal.microservice.store.controller.dto.VoucherDTO;
 import br.com.personal.microservice.store.model.Compra;
 import br.com.personal.microservice.store.repository.CompraRepository;
 
@@ -24,6 +27,9 @@ public class CompraService {
 	
 	@Autowired
 	private FornecedorClient fornecedorClient;
+	
+	@Autowired
+	private TransportadorClient transportadorClient;
 	
 	@HystrixCommand(threadPoolKey = "getByIdThreadPool")
 	public Compra getById(Long id) {
@@ -41,6 +47,9 @@ public class CompraService {
 		
 		LOG.info("Realizando um pedido");
 		InfoPedidoDTO pedidoDTO = fornecedorClient.realizaPedido(compra.getItens());
+		
+		InfoEntregaDTO entregaDTO = new InfoEntregaDTO();		
+		VoucherDTO voucher = transportadorClient.reservaentrega(entregaDTO);
 		
 		Compra compraSalva = new Compra();
 		compraSalva.setPedidoId(pedidoDTO.getId());
