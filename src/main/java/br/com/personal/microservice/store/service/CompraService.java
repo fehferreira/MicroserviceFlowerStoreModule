@@ -22,8 +22,6 @@ import br.com.personal.microservice.store.repository.CompraRepository;
 
 @Service
 public class CompraService {
-
-	private static final Logger LOG = LoggerFactory.getLogger(CompraService.class);
 	
 	@Autowired
 	private CompraRepository compraRepository;
@@ -47,6 +45,7 @@ public class CompraService {
 		compraSalva.setEnderecoDestino(compra.getEndereco().toString());
 		compraSalva.setState(CompraState.RECEBIDO);
 		compraRepository.save(compraSalva);
+		compra.setCompraId(compraSalva.getId());
 	
 		InfoFornecedorDTO fornecedorDTO = fornecedorClient.getInfoPorEstado(compra.getEndereco().getEstado());
 		
@@ -71,6 +70,10 @@ public class CompraService {
 	}
 	
 	public Compra realizaCompraFallback(CompraDTO compra) {
+		if(compra.getCompraId() != null) {
+			return compraRepository.findById(compra.getCompraId()).get();
+		}
+		
 		Compra compraFallBack = new Compra();
 		compraFallBack.setEnderecoDestino(compra.getEndereco().toString());
 		return compraFallBack;
